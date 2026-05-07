@@ -1,0 +1,95 @@
+# Crucible Adversarial Review
+
+**Input type:** {{ report.input_type }}
+**Reviewers ({{ report.critiques | length }}):** {{ report.critiques | map(attribute='persona') | join(', ') }}
+{% if report.metadata.synthesizer_model %}
+**Synthesizer model:** {{ report.metadata.synthesizer_model }}{% if report.metadata.synthesis_pass %} ({{ report.metadata.synthesis_pass }}){% endif %}
+{% endif %}
+
+## Input
+
+{{ report.input }}
+
+---
+
+## Overall Assessment
+
+{{ report.overall_assessment or "_(no synthesis returned)_" }}
+
+---
+
+## Findings
+
+{% if report.findings %}
+| # | Severity | Confidence | OWASP | Title | Raised by |
+|---|----------|------------|-------|-------|-----------|
+{% for f in report.findings %}
+| {{ loop.index }} | {{ f.severity }} | {{ f.confidence }} | {{ f.owasp_category or '—' }} | {{ f.title }} | {{ f.raised_by | join(', ') or '—' }} |
+{% endfor %}
+
+{% for f in report.findings %}
+### {{ loop.index }}. {{ f.title }}
+
+- **Severity:** {{ f.severity }}
+- **Confidence:** {{ f.confidence }} ({{ f.raised_by | length }}/{{ report.critiques | length }} reviewers)
+- **OWASP:** {{ f.owasp_category or '—' }}
+- **Raised by:** {{ f.raised_by | join(', ') or '_unknown_' }}
+
+{{ f.summary }}
+
+{% endfor %}
+{% else %}
+_No structured findings were extracted by the synthesizer. See per-reviewer critiques below._
+{% endif %}
+
+---
+
+## Vulnerabilities
+
+{% if report.vulnerabilities %}
+{% for v in report.vulnerabilities %}
+- {{ v }}
+{% endfor %}
+{% else %}
+_(none flagged)_
+{% endif %}
+
+## Resilience Signals
+
+{% if report.resilience_signals %}
+{% for s in report.resilience_signals %}
+- {{ s }}
+{% endfor %}
+{% else %}
+_(none flagged)_
+{% endif %}
+
+---
+
+## Round 1 — Independent Critiques
+
+{% for c in report.critiques %}
+### {{ c.persona }}
+
+{{ c.content }}
+
+---
+{% endfor %}
+
+## Round 2 — Cross-Debate
+
+{% for t in report.debate %}
+### {{ t.persona }}
+
+{{ t.content }}
+
+---
+{% endfor %}
+
+{% if not report.findings and report.synthesis_raw %}
+## Synthesizer Raw Output
+
+```
+{{ report.synthesis_raw }}
+```
+{% endif %}
