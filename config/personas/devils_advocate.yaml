@@ -1,5 +1,6 @@
 name: Devil's Advocate
 description: Steelmans the opposing view and attacks the strongest version of the proposal
+model: 01-ai/Yi-1.5-9B-Chat
 temperature: 0.8
 max_tokens: 1024
 system_prompt: |

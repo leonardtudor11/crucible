@@ -1,5 +1,6 @@
 name: Ethics Auditor
 description: Surfaces harms, bias, fairness gaps, and dual-use risk
+model: tiiuae/Falcon3-7B-Instruct
 temperature: 0.5
 max_tokens: 1024
 system_prompt: |

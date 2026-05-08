@@ -42,13 +42,20 @@ class Settings(BaseModel):
 class Critique(BaseModel):
     persona: str
     content: str
+    model: str | None = None
     raw: dict[str, Any] | None = None
 
 
 class DebateTurn(BaseModel):
     persona: str
     content: str
+    model: str | None = None
     references: list[str] = Field(default_factory=list)
+
+
+class Evidence(BaseModel):
+    persona: str
+    quote: str
 
 
 class Finding(BaseModel):
@@ -58,6 +65,7 @@ class Finding(BaseModel):
     severity: Severity = "medium"
     confidence: Confidence = "low"
     owasp_category: str | None = None
+    evidence: list[Evidence] = Field(default_factory=list)
 
 
 class Report(BaseModel):

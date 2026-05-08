@@ -1,5 +1,6 @@
 name: Skeptic
 description: Demands evidence, attacks unsupported assumptions
+model: Qwen/Qwen2.5-7B-Instruct
 temperature: 0.4
 max_tokens: 1024
 system_prompt: |

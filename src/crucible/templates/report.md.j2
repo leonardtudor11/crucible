@@ -2,8 +2,14 @@
 
 **Input type:** {{ report.input_type }}
 **Reviewers ({{ report.critiques | length }}):** {{ report.critiques | map(attribute='persona') | join(', ') }}
+{% if report.metadata.distinct_model_count %}
+**Distinct models in panel:** {{ report.metadata.distinct_model_count }} — {{ report.metadata.distinct_models | join(', ') }}
+{% endif %}
 {% if report.metadata.synthesizer_model %}
 **Synthesizer model:** {{ report.metadata.synthesizer_model }}{% if report.metadata.synthesis_pass %} ({{ report.metadata.synthesis_pass }}){% endif %}
+{% endif %}
+{% if report.metadata.run_id %}
+**Run ID:** `{{ report.metadata.run_id }}` &nbsp; **Schema:** v{{ report.metadata.schema_version }} &nbsp; **At:** {{ report.metadata.timestamp }}
 {% endif %}
 
 ## Input
@@ -37,6 +43,14 @@
 
 {{ f.summary }}
 
+{% if f.evidence %}
+**Evidence:**
+
+{% for e in f.evidence %}
+> *{{ e.persona }}* — "{{ e.quote }}"
+
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% else %}
 _No structured findings were extracted by the synthesizer. See per-reviewer critiques below._
@@ -69,7 +83,7 @@ _(none flagged)_
 ## Round 1 — Independent Critiques
 
 {% for c in report.critiques %}
-### {{ c.persona }}
+### {{ c.persona }}{% if c.model %} &nbsp; *(model: `{{ c.model }}`)*{% endif %}
 
 {{ c.content }}
 
@@ -79,7 +93,7 @@ _(none flagged)_
 ## Round 2 — Cross-Debate
 
 {% for t in report.debate %}
-### {{ t.persona }}
+### {{ t.persona }}{% if t.model %} &nbsp; *(model: `{{ t.model }}`)*{% endif %}
 
 {{ t.content }}
 

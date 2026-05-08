@@ -23,8 +23,13 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from .client import ChatClient
-from .models import Confidence, Critique, DebateTurn, Finding, Report
+from .models import Confidence, Critique, DebateTurn, Evidence, Finding, Report
+
+SCHEMA_VERSION = "1"
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -43,7 +48,11 @@ OUTPUT EXACTLY ONE JSON OBJECT with this exact schema and no other top-level key
       "summary": "one-sentence description of the concern",
       "raised_by": ["ExactReviewerName1", "ExactReviewerName2"],
       "severity": "critical" | "high" | "medium" | "low",
-      "owasp_category": "<OWASP code or null>"
+      "owasp_category": "<OWASP code or null>",
+      "evidence": [
+        {"persona": "ExactReviewerName1", "quote": "verbatim sentence from their critique that supports this finding"},
+        {"persona": "ExactReviewerName2", "quote": "verbatim sentence from their critique"}
+      ]
     }
   ],
   "vulnerabilities": ["short bullet", "short bullet"],
@@ -55,16 +64,20 @@ CRITICAL RULES:
 1. "raised_by" MUST be a non-empty array of EXACT reviewer names from the
    roster supplied in the user message. Do not invent names. Do not
    abbreviate. If a finding came from one reviewer, use a one-element array.
-2. Merge duplicate concerns from different reviewers into ONE finding with
+2. "evidence" MUST contain one item per reviewer in raised_by. The "quote"
+   MUST be a verbatim substring (or close paraphrase if no direct sentence
+   exists) drawn from that reviewer's critique or debate turn. Do not invent
+   quotes. Keep each quote under 200 characters.
+3. Merge duplicate concerns from different reviewers into ONE finding with
    multiple names in raised_by.
-3. "owasp_category" should be an OWASP code only for security or integrity
+4. "owasp_category" should be an OWASP code only for security or integrity
    findings. Use A01-A10 for generic web/app issues, or LLM01-LLM10 for
    AI/LLM-specific issues (e.g. LLM01 = Prompt Injection, LLM02 = Insecure
    Output Handling, LLM06 = Sensitive Information Disclosure). Set to null
    for findings about ethics, market, scope, operations, or other
    non-security concerns.
-4. Vulnerabilities = weaknesses or risks. Resilience signals = strengths.
-5. Output the JSON object ONLY. No prose before or after, no markdown code
+5. Vulnerabilities = weaknesses or risks. Resilience signals = strengths.
+6. Output the JSON object ONLY. No prose before or after, no markdown code
    fences, no comments, no extra top-level keys.
 
 EXAMPLE OUTPUT (illustrates schema only — for an unrelated proposal):
@@ -75,14 +88,21 @@ EXAMPLE OUTPUT (illustrates schema only — for an unrelated proposal):
       "summary": "The proposal asserts brand-aligned AI output but supplies no benchmark or A/B test data.",
       "raised_by": ["Skeptic", "Devil's Advocate"],
       "severity": "high",
-      "owasp_category": null
+      "owasp_category": null,
+      "evidence": [
+        {"persona": "Skeptic", "quote": "There is no evidence showing the quality of AI-generated content compared to human-created content."},
+        {"persona": "Devil's Advocate", "quote": "Without comparative A/B data the value claim is asserted, not demonstrated."}
+      ]
     },
     {
       "title": "Prompt injection via uploaded brand guidelines",
       "summary": "Customer-supplied text flows unchecked into the model, allowing exfiltration of other customers' templates.",
       "raised_by": ["Red Teamer"],
       "severity": "critical",
-      "owasp_category": "LLM01"
+      "owasp_category": "LLM01",
+      "evidence": [
+        {"persona": "Red Teamer", "quote": "An attacker uploading crafted text could exfiltrate other customers' templates."}
+      ]
     }
   ],
   "vulnerabilities": [
@@ -201,6 +221,23 @@ def _sort_findings(findings: list[Finding]) -> list[Finding]:
     return findings
 
 
+def _coerce_evidence(raw_evidence: Any, valid_names: set[str]) -> list[Evidence]:
+    out: list[Evidence] = []
+    if not isinstance(raw_evidence, list):
+        return out
+    for item in raw_evidence:
+        if not isinstance(item, dict):
+            continue
+        persona = str(item.get("persona", "")).strip()
+        quote = str(item.get("quote", "")).strip()
+        if not persona or not quote or persona not in valid_names:
+            continue
+        if len(quote) > 400:
+            quote = quote[:400].rstrip() + " […]"
+        out.append(Evidence(persona=persona, quote=quote))
+    return out
+
+
 def _coerce_findings(
     raw_findings: list[Any],
     persona_names: list[str],
@@ -216,6 +253,9 @@ def _coerce_findings(
         if not title or not summary:
             continue
         raised = _dedupe_names(item.get("raised_by") or [], valid_names)
+        evidence = _coerce_evidence(item.get("evidence"), valid_names)
+        # Filter evidence to only include personas in raised_by.
+        evidence = [e for e in evidence if e.persona in raised]
         out.append(
             Finding(
                 title=title[:200],
@@ -224,6 +264,7 @@ def _coerce_findings(
                 severity=_normalize_severity(item.get("severity")),  # type: ignore[arg-type]
                 confidence=_confidence_label(len(raised), total),
                 owasp_category=_normalize_owasp(item.get("owasp_category")),
+                evidence=evidence,
             )
         )
     return _sort_findings(out)
@@ -493,6 +534,11 @@ async def synthesize(
             "critiques below remain the source of truth for this run."
         )
 
+    persona_models = {
+        c.persona: c.model for c in critiques if c.model is not None
+    }
+    distinct_models = sorted(set(persona_models.values()))
+
     return Report(
         input=user_input,
         input_type=input_type,
@@ -503,7 +549,17 @@ async def synthesize(
         resilience_signals=resilience_signals,
         overall_assessment=overall,
         synthesis_raw=raw,
-        metadata={"synthesizer_model": model, "synthesis_pass": pass_used},
+        metadata={
+            "schema_version": SCHEMA_VERSION,
+            "run_id": str(uuid4()),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "synthesizer_model": model,
+            "synthesis_pass": pass_used,
+            "persona_models": persona_models,
+            "distinct_models": distinct_models,
+            "distinct_model_count": len(distinct_models),
+            "input_chars": len(user_input),
+        },
     )
 
 

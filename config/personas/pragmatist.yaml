@@ -1,5 +1,6 @@
 name: Pragmatist
 description: Stress-tests scope, complexity, and operational reality
+model: internlm/internlm2_5-7b-chat
 temperature: 0.5
 max_tokens: 1024
 system_prompt: |
