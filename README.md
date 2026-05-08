@@ -115,6 +115,15 @@ in the report, fully reproducible. Most are addressed in [Limitations](#limitati
 below. Including them in the README is the point: the tool is only
 useful if it can criticize the system that built it.
 
+To verify nothing has been hand-edited, regenerate the file from scratch:
+
+```bash
+python scripts/self_review.py
+```
+
+The pitch text is hardcoded in the script; the findings, evidence
+quotes, and overall assessment come fresh from the six-model panel.
+
 The dashboard also has a **live A/B mode** — one click runs both modes
 on the same input sequentially and renders findings side-by-side, so
 judges can see calibration on whatever input they paste.
