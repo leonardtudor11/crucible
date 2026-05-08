@@ -507,15 +507,30 @@ Cross-architecture agreement scoring.
     )
 
     detected = detect_input_type(user_input) if user_input.strip() else "—"
-    cols = st.columns([1, 1, 1, 4])
+    type_color = {
+        "business": "#2563eb",
+        "code": "#7c3aed",
+        "url": "#0891b2",
+        "—": "#6b7280",
+    }.get(detected, "#6b7280")
+
+    chips_html = (
+        f'<div style="display:flex;gap:12px;align-items:center;margin:8px 0;">'
+        f'<span style="background:{type_color};color:white;padding:6px 14px;'
+        f'border-radius:6px;font-size:0.85rem;font-weight:600;'
+        f'text-transform:uppercase;letter-spacing:0.05em;">{detected}</span>'
+        f'<span style="background:#1f2937;color:#d1d5db;padding:6px 14px;'
+        f'border-radius:6px;font-size:0.85rem;">'
+        f'<strong>{len(user_input):,}</strong> chars · max {MAX_INPUT_CHARS:,}</span>'
+        f'<span style="background:#1f2937;color:#d1d5db;padding:6px 14px;'
+        f'border-radius:6px;font-size:0.85rem;">'
+        f'<strong>6</strong> reviewers · 6 model families</span>'
+        f'</div>'
+    )
+    cols = st.columns([3, 2])
     with cols[0]:
-        st.metric("Input type", detected)
+        st.markdown(chips_html, unsafe_allow_html=True)
     with cols[1]:
-        st.metric("Length", f"{len(user_input)} ch")
-    with cols[2]:
-        st.metric("Reviewers", "6")
-    with cols[3]:
-        st.write("")
         run = st.button(
             "Run Adversarial Review",
             type="primary",
@@ -525,7 +540,6 @@ Cross-architecture agreement scoring.
 
     if run:
         prepared = prepare_input(user_input, detected)
-        st.markdown("---")
         try:
             t0 = time.perf_counter()
             with st.status("Starting pipeline...", expanded=True) as status_holder:
@@ -533,31 +547,38 @@ Cross-architecture agreement scoring.
                     run_pipeline(prepared, detected, status_holder)
                 )
             runtime_s = time.perf_counter() - t0
-
-            tab1, tab2, tab3, tab4, tab5 = st.tabs(
-                ["Findings", "Reviewers (Round 1)", "Cross-debate (Round 2)", "Metrics", "Markdown"]
-            )
-            with tab1:
-                render_findings_tab(report)
-            with tab2:
-                render_reviewers_tab(report)
-            with tab3:
-                render_debate_tab(report)
-            with tab4:
-                render_metrics_tab(report, runtime_s)
-            with tab5:
-                md = render_markdown(report)
-                st.code(md, language="markdown")
-                st.download_button(
-                    "Download Markdown report",
-                    data=md,
-                    file_name=f"crucible_{report.metadata.get('run_id','report')}.md",
-                    mime="text/markdown",
-                )
+            st.session_state["last_report"] = report
+            st.session_state["last_runtime_s"] = runtime_s
         except InputTooLongError as e:
             st.error(f"Input too long: {e}")
         except Exception as e:
             st.error(f"Pipeline failed: {type(e).__name__}: {e}")
+
+    # Render last report (persists across reruns until a new one is produced)
+    last_report = st.session_state.get("last_report")
+    last_runtime = st.session_state.get("last_runtime_s", 0)
+    if last_report is not None:
+        st.markdown("---")
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            ["Findings", "Reviewers (Round 1)", "Cross-debate (Round 2)", "Metrics", "Markdown"]
+        )
+        with tab1:
+            render_findings_tab(last_report)
+        with tab2:
+            render_reviewers_tab(last_report)
+        with tab3:
+            render_debate_tab(last_report)
+        with tab4:
+            render_metrics_tab(last_report, last_runtime)
+        with tab5:
+            md = render_markdown(last_report)
+            st.code(md, language="markdown")
+            st.download_button(
+                "Download Markdown report",
+                data=md,
+                file_name=f"crucible_{last_report.metadata.get('run_id', 'report')}.md",
+                mime="text/markdown",
+            )
 
 
 if __name__ == "__main__":
