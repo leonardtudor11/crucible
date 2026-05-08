@@ -260,6 +260,16 @@ def render_metrics_tab(report: Report, runtime_s: float) -> None:
     cols[2].metric("Synthesis pass", md.get("synthesis_pass", "—"))
     cols[3].metric("Schema version", md.get("schema_version", "—"))
 
+    # Privacy + token accounting
+    tokens_in = md.get("tokens_in", 0)
+    tokens_out = md.get("tokens_out", 0)
+    cols2 = st.columns(4)
+    cols2[0].metric("API calls", md.get("api_calls", 0))
+    cols2[1].metric("Tokens in", f"{tokens_in:,}")
+    cols2[2].metric("Tokens out", f"{tokens_out:,}")
+    cols2[3].metric("External API tokens", md.get("external_api_tokens", 0),
+                    help="Privacy invariant: 0 tokens leave the GPU.")
+
     st.markdown("### Model panel")
     persona_models = md.get("persona_models", {})
     if persona_models:

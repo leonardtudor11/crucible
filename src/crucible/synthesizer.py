@@ -559,6 +559,10 @@ async def synthesize(
             "distinct_models": distinct_models,
             "distinct_model_count": len(distinct_models),
             "input_chars": len(user_input),
+            "tokens_in": getattr(client, "prompt_tokens_total", 0),
+            "tokens_out": getattr(client, "completion_tokens_total", 0),
+            "api_calls": getattr(client, "calls", 0),
+            "external_api_tokens": 0,  # privacy invariant — nothing leaves the GPU
         },
     )
 

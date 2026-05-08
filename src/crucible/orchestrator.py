@@ -86,16 +86,34 @@ async def gather_critiques(
     return await asyncio.gather(*tasks)
 
 
+def _truncate_at_sentence(text: str, max_chars: int) -> str:
+    """Truncate `text` to <= max_chars, preferring a sentence boundary.
+
+    Looks back from max_chars for the nearest '.', '!', or '?' followed
+    by whitespace. Falls back to a hard char cut if no boundary is found
+    within the last 20% of the budget.
+    """
+    if len(text) <= max_chars:
+        return text
+    head = text[:max_chars]
+    # Search for sentence terminator in the last 20% of the budget
+    window_start = int(max_chars * 0.8)
+    for i in range(max_chars - 1, window_start, -1):
+        if head[i] in ".!?" and (i + 1 >= len(head) or head[i + 1].isspace()):
+            return head[: i + 1].rstrip() + " […]"
+    # No boundary found — hard cut
+    return head.rstrip() + " […]"
+
+
 def _format_others(
     critiques: list[Critique], exclude: str, max_chars_per: int = 600
 ) -> str:
-    """Concat other reviewers' critiques, truncated so short-context models fit."""
+    """Concat other reviewers' critiques, truncated at a sentence
+    boundary so short-context models (e.g. Yi 4k) fit during debate."""
     others = [c for c in critiques if c.persona != exclude]
     parts: list[str] = []
     for c in others:
-        body = c.content
-        if len(body) > max_chars_per:
-            body = body[:max_chars_per].rstrip() + " […]"
+        body = _truncate_at_sentence(c.content, max_chars_per)
         parts.append(f"## {c.persona} said\n{body}")
     return "\n\n".join(parts)
 

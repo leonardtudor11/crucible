@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use Crucible in research or build on it, please cite as below."
+title: "Crucible: Multi-Agent Adversarial AI Review on AMD MI300X"
+abstract: >-
+  Crucible is a multi-agent adversarial review engine that runs six
+  architecturally distinct open-source LLM families in parallel on a
+  single AMD MI300X GPU. Each model plays a different reviewer persona;
+  findings are scored by inter-architecture agreement and emitted as
+  structured JSON with verbatim evidence quotes per finding.
+authors:
+  - family-names: Tudor
+    given-names: Mirel Leonard
+    country: RO
+type: software
+license: MIT
+version: "1.0"
+date-released: "2026-05-09"
+url: "https://github.com/leonardtudor11/crucible"
+repository-code: "https://github.com/leonardtudor11/crucible"
+keywords:
+  - multi-agent
+  - adversarial-review
+  - llm
+  - amd-mi300x
+  - vllm
+  - rocm
+  - llm-as-judge
+  - prompt-injection
+  - owasp-llm-top-10
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Tudor
+      given-names: Mirel Leonard
+  title: "Crucible: Multi-Agent Adversarial AI Review on AMD MI300X"
+  year: 2026
+  url: "https://github.com/leonardtudor11/crucible"

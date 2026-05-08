@@ -91,6 +91,30 @@ robust if a future small model breaks JSON.
 
 ![Eval comparison page in the dashboard](screenshots/02_comparison_page.png)
 
+## Crucible reviews Crucible
+
+Recursive self-test: we fed Crucible's own pitch into the pipeline and
+let the six adversarial reviewers go to work on the project itself.
+Full report at [SELF_REVIEW.md](SELF_REVIEW.md). Selected findings:
+
+> **Skeptic + Market Critic** — *"Empirical evidence required."*
+> "Data showing that the independent flags from these models correlate
+> with known ground truths or high-quality manual reviews is needed."
+>
+> **Red Teamer** — *"Security vulnerabilities" (LLM01).*
+> "A competitor or saboteur could inject malicious inputs that bypass
+> the SECURITY NOTICE prefix and USER_INPUT markers."
+>
+> **Pragmatist** — *"Resource management challenges."*
+> "Running six models simultaneously on a single GPU with 192 GB VRAM
+> is ambitious. The high memory utilization may not be sustainable over
+> extended periods."
+
+These are real critiques Crucible made about itself — verbatim quotes
+in the report, fully reproducible. Most are addressed in [Limitations](#limitations-and-future-work)
+below. Including them in the README is the point: the tool is only
+useful if it can criticize the system that built it.
+
 The dashboard also has a **live A/B mode** — one click runs both modes
 on the same input sequentially and renders findings side-by-side, so
 judges can see calibration on whatever input they paste.
@@ -185,6 +209,51 @@ crucible/
   ]
 }
 ```
+
+## Limitations and future work
+
+In the spirit of the trust pack, here's what Crucible *doesn't* do yet —
+several of these were flagged by Crucible itself in
+[SELF_REVIEW.md](SELF_REVIEW.md).
+
+- **Persona depth is bounded by 7-9B model capacity.** Critiques can read
+  generic compared to what a 70B+ model would produce. The architecture
+  carries over: edit `config/personas/*.yaml` to point at larger models
+  and adjust `--gpu-memory-utilization` per container. AWQ-quantized 32B
+  per persona is the next obvious step on the same MI300X.
+- **Confidence labels are heuristic.** "5/6 high, 3/6 medium, 1/6 low" is
+  a defensible threshold, not a calibrated probability. A future version
+  should run inter-rater statistics (Cohen's κ, Krippendorff's α) over
+  multiple runs of the same input — exactly what the Skeptic asked for.
+- **Run-to-run variance is real.** With temperature > 0, the same input
+  produces somewhat different findings each time. We've not measured
+  stability quantitatively. A `--stability` mode that reruns N times and
+  reports consistency would close this gap.
+- **Evidence verbatim-checking.** The synthesizer is *asked* to quote
+  verbatim and the parser filters by known persona names, but nothing
+  currently verifies that each quote actually appears in the cited
+  persona's critique. A post-processing step that fuzzy-matches each
+  evidence quote against the source is straightforward.
+- **Single GPU resource ceiling.** Six 7-9B models at FP16 fit in 192 GB
+  with ~22 GB headroom. Pushing to 32B class models per persona would
+  require either tensor parallelism across multiple MI300Xs or
+  quantization. The Pragmatist correctly flagged that current memory
+  utilization "may not be sustainable over extended periods."
+- **No persistent run history.** Each Crucible run is a one-shot.
+  `eval_results/*.json` is the audit trail today; a SQLite-backed run
+  log would enable longitudinal comparison and cohort analysis.
+- **No streaming output.** The dashboard updates per-phase, not
+  per-token. Token-streaming via Server-Sent Events would tighten the
+  perceived loop.
+- **Marketplace ops complexity.** Six vLLM containers + LiteLLM is more
+  moving parts than a single API call. `ops/launch_panel.sh` is
+  idempotent, but a `docker-compose.yml` with health checks and a
+  systemd unit wrapping it would be cleaner for production.
+
+## Citing this work
+
+A `CITATION.cff` is included at the repo root — GitHub renders a
+"Cite this repository" button in the right sidebar.
 
 ## License
 

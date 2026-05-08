@@ -18,6 +18,11 @@ class ChatClient:
     def __init__(self, config: EndpointConfig) -> None:
         self._config = config
         self._client: httpx.AsyncClient | None = None
+        # Aggregated token usage across all chat() calls in this session.
+        # Surfaces in Report.metadata so the privacy claim is measurable.
+        self.prompt_tokens_total = 0
+        self.completion_tokens_total = 0
+        self.calls = 0
 
     async def __aenter__(self) -> Self:
         headers: dict[str, str] = {}
@@ -74,6 +79,12 @@ class ChatClient:
                 response = await self._client.post("/chat/completions", json=payload)
                 response.raise_for_status()
                 data = response.json()
+                usage = data.get("usage") or {}
+                self.prompt_tokens_total += int(usage.get("prompt_tokens", 0) or 0)
+                self.completion_tokens_total += int(
+                    usage.get("completion_tokens", 0) or 0
+                )
+                self.calls += 1
                 return data["choices"][0]["message"]["content"]
             except httpx.HTTPStatusError as e:
                 # 4xx — caller error (auth, model not found). Don't retry.
