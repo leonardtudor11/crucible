@@ -147,9 +147,12 @@ SINGLE_MODEL_BASELINE = "Qwen/Qwen2.5-7B-Instruct"
 
 
 async def run_pipeline(
-    user_input: str, input_type: str, status_holder,
+    user_input: str, input_type: str, set_phase,
     single_model: bool = False,
 ):
+    """Run the full pipeline. `set_phase(text)` is called as the
+    pipeline advances so the UI can display a single rolling status line.
+    """
     settings = load_settings()
     personas = load_personas(Path(settings.personas_dir))
     if single_model:
@@ -159,25 +162,21 @@ async def run_pipeline(
 
     distinct = len({p.model or default_model for p in personas})
     mode_label = "single-model baseline" if single_model else f"{distinct}-model panel"
-    status_holder.update(label=f"Loaded {len(personas)} personas — {mode_label}")
 
     async with ChatClient(settings.endpoint) as client:
-        status_holder.update(label=f"Round 1 ({mode_label}): 6 critiques in parallel...")
+        set_phase(f"{mode_label} — Round 1: 6 critiques in parallel...")
         critiques = await gather_critiques(client, personas, user_input, default_model)
-        status_holder.update(label=f"Round 1 complete: {len(critiques)} critiques")
 
-        status_holder.update(label=f"Round 2 ({mode_label}): cross-debate...")
+        set_phase(f"{mode_label} — Round 2: cross-debate ({len(critiques)} reviewers)...")
         debate = await run_debate(client, personas, user_input, critiques, default_model)
-        status_holder.update(label=f"Round 2 complete: {len(debate)} responses")
 
-        status_holder.update(label="Synthesizing — extracting findings, citing evidence...")
+        set_phase(f"{mode_label} — Synthesizing findings + evidence...")
         report = await synthesize(
             client, user_input, critiques, debate,
             model=settings.orchestration.synthesizer_model,
             temperature=settings.orchestration.synthesizer_temperature,
             input_type=input_type,
         )
-        status_holder.update(label=f"Synthesis complete ({mode_label})", state="complete")
     return report
 
 
@@ -188,40 +187,29 @@ def render_finding_card(idx: int, f) -> None:
     conf_badge = CONFIDENCE_LABEL.get(f.confidence, "?")
     owasp = f.owasp_category or ""
     owasp_html = (
-        f'<span style="background:#1e3a8a;color:white;padding:2px 8px;'
-        f'border-radius:4px;font-size:0.75rem;margin-left:8px;">'
-        f'OWASP {owasp}</span>'
+        f'<span style="background:#1e3a8a;color:white;padding:2px 8px;border-radius:4px;font-size:0.75rem;margin-left:8px;">OWASP {owasp}</span>'
         if owasp else ""
     )
     raised_count = len(f.raised_by)
-    total = max(raised_count, 1)
-    st.markdown(
-        f"""
-<div style="border-left:4px solid {color};padding:12px 16px;margin:8px 0;
-            background:#0b1220;border-radius:4px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;">
-    <div>
-      <span style="background:{color};color:white;padding:2px 8px;
-                   border-radius:4px;font-size:0.75rem;font-weight:600;
-                   text-transform:uppercase;">{f.severity}</span>
-      <span style="background:#374151;color:#e5e7eb;padding:2px 8px;
-                   border-radius:4px;font-size:0.75rem;margin-left:8px;">
-        {conf_badge} confidence · {raised_count}/6
-      </span>
-      {owasp_html}
-    </div>
-  </div>
-  <h4 style="margin:8px 0 4px 0;color:#e5e7eb;">#{idx}. {f.title}</h4>
-  <p style="margin:4px 0;color:#9ca3af;font-size:0.95rem;">{f.summary}</p>
-  <p style="margin:4px 0;font-size:0.85rem;color:#9ca3af;">
-    Raised by: <strong>{', '.join(f.raised_by) or '—'}</strong>
-  </p>
-</div>
-""",
-        unsafe_allow_html=True,
+    raised_str = ", ".join(f.raised_by) or "—"
+    # Single-line HTML to avoid markdown's 4-space-indent code-block rule
+    # escaping nested </div> tags.
+    html = (
+        f'<div style="border-left:4px solid {color};padding:14px 16px;margin:14px 0;background:#0b1220;border-radius:6px;">'
+        f'<div>'
+        f'<span style="background:{color};color:white;padding:3px 10px;border-radius:4px;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">{f.severity}</span>'
+        f'<span style="background:#374151;color:#e5e7eb;padding:3px 10px;border-radius:4px;font-size:0.75rem;margin-left:8px;">{conf_badge} confidence · {raised_count}/6</span>'
+        f'{owasp_html}'
+        f'</div>'
+        f'<h4 style="margin:10px 0 4px 0;color:#e5e7eb;font-size:1.05rem;">#{idx}. {f.title}</h4>'
+        f'<p style="margin:6px 0;color:#cbd5e1;font-size:0.95rem;line-height:1.5;">{f.summary}</p>'
+        f'<p style="margin:6px 0 0 0;font-size:0.8rem;color:#9ca3af;">Raised by: <strong style="color:#e5e7eb;">{raised_str}</strong></p>'
+        f'</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
     if f.evidence:
-        with st.expander(f"Evidence ({len(f.evidence)} verbatim quote{'s' if len(f.evidence) != 1 else ''})"):
+        plural = "s" if len(f.evidence) != 1 else ""
+        with st.expander(f"Evidence ({len(f.evidence)} verbatim quote{plural})"):
             for e in f.evidence:
                 st.markdown(f"**{e.persona}** — *“{e.quote}”*")
 
@@ -299,21 +287,15 @@ def render_gpu_panel() -> None:
         return
     pct = snap["pct"]
     bar_color = "#10b981" if pct < 70 else "#f59e0b" if pct < 90 else "#ef4444"
-    st.markdown(
-        f"""
-<div style="font-size:0.85rem;color:#9ca3af;">VRAM</div>
-<div style="font-size:1.4rem;font-weight:600;color:#f9fafb;">
-  {snap['used_gb']}/{snap['total_gb']} GB
-</div>
-<div style="height:6px;background:#1f2937;border-radius:3px;overflow:hidden;margin:4px 0;">
-  <div style="width:{pct}%;height:100%;background:{bar_color};"></div>
-</div>
-<div style="font-size:0.75rem;color:#9ca3af;">
-  {pct}% utilized · GPU use: {snap['gpu_use_pct']}%
-</div>
-""",
-        unsafe_allow_html=True,
+    html = (
+        f'<div style="font-size:0.85rem;color:#9ca3af;">VRAM</div>'
+        f'<div style="font-size:1.4rem;font-weight:600;color:#f9fafb;">{snap["used_gb"]}/{snap["total_gb"]} GB</div>'
+        f'<div style="height:6px;background:#1f2937;border-radius:3px;overflow:hidden;margin:4px 0;">'
+        f'<div style="width:{pct}%;height:100%;background:{bar_color};"></div>'
+        f'</div>'
+        f'<div style="font-size:0.75rem;color:#9ca3af;">{pct}% utilized · GPU use: {snap["gpu_use_pct"]}%</div>'
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ----- sample inputs -----------------------------------------------------------
@@ -567,17 +549,24 @@ Cross-architecture agreement scoring.
         )
 
     def _run(single: bool, label: str):
+        phase_box = st.empty()
+
+        def set_phase(text: str) -> None:
+            phase_box.info(text)
+
         try:
             t0 = time.perf_counter()
-            with st.status(f"{label}: starting...", expanded=True) as status_holder:
-                rpt = asyncio.run(
-                    run_pipeline(prepared, detected, status_holder, single_model=single)
-                )
-            return rpt, time.perf_counter() - t0
+            set_phase(f"{label}: starting...")
+            rpt = asyncio.run(
+                run_pipeline(prepared, detected, set_phase, single_model=single)
+            )
+            elapsed = time.perf_counter() - t0
+            phase_box.success(f"{label} complete in {elapsed:.1f}s")
+            return rpt, elapsed
         except InputTooLongError as e:
-            st.error(f"Input too long: {e}")
+            phase_box.error(f"Input too long: {e}")
         except Exception as e:
-            st.error(f"{label} failed: {type(e).__name__}: {e}")
+            phase_box.error(f"{label} failed: {type(e).__name__}: {e}")
         return None, 0.0
 
     if run or run_single or run_both:
@@ -613,7 +602,7 @@ Cross-architecture agreement scoring.
         s_rpt, s_t = ab_single
         st.markdown("---")
         st.markdown("## A/B comparison — multi-model vs single-model on this input")
-        cols = st.columns(2)
+        cols = st.columns(2, gap="large")
         with cols[0]:
             st.markdown(f"### Multi-model panel ({m_rpt.metadata.get('distinct_model_count', 0)} families)")
             cc = st.columns(4)
