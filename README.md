@@ -86,6 +86,12 @@ stays robust if a future small model breaks JSON.
 
 ![Eval comparison page in the dashboard](screenshots/02_comparison_page.png)
 
+The dashboard also has a **live A/B mode** — one click runs both modes
+on the same input sequentially and renders findings side-by-side, so
+judges can see calibration on whatever input they paste.
+
+![Live A/B comparison — multi-model vs single-model on the same input](screenshots/05_ab_compare.png)
+
 ## Trust pack
 
 Built into every report:
