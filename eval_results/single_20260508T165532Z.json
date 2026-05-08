@@ -1,0 +1,198 @@
+{
+  "mode": "single",
+  "timestamp": "2026-05-08T16:55:32.340537+00:00",
+  "input_count": 6,
+  "gpu_before": null,
+  "gpu_after": {
+    "used_gb": 199.46,
+    "total_gb": 205.82
+  },
+  "aggregate": {
+    "valid_runs": 6,
+    "errored_runs": 0,
+    "median_total_s": 30.825,
+    "p95_total_s": 31.722500000000004,
+    "median_findings": 4.5,
+    "median_evidence_per_run": 10.5,
+    "pass1_rate": 1.0,
+    "owasp_tagged_total": 3,
+    "high_confidence_findings_total": 0,
+    "medium_confidence_findings_total": 6
+  },
+  "per_input": [
+    {
+      "error": null,
+      "round1_s": 11.39,
+      "round2_s": 6.08,
+      "synth_s": 13.27,
+      "total_s": 30.74,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 5,
+      "confidence": {
+        "high": 0,
+        "medium": 2,
+        "low": 3
+      },
+      "severity": {
+        "critical": 0,
+        "high": 5,
+        "medium": 0,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 12,
+      "vulnerabilities_count": 3,
+      "resilience_count": 2,
+      "overall_assessment_chars": 243,
+      "run_id": "8a5553e0-df67-4f20-b6ea-808325fc8408",
+      "input_file": "01_saas_social.txt",
+      "input_chars": 292
+    },
+    {
+      "error": null,
+      "round1_s": 14.13,
+      "round2_s": 6.32,
+      "synth_s": 10.99,
+      "total_s": 31.43,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 4,
+      "confidence": {
+        "high": 0,
+        "medium": 1,
+        "low": 3
+      },
+      "severity": {
+        "critical": 0,
+        "high": 2,
+        "medium": 2,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 9,
+      "vulnerabilities_count": 3,
+      "resilience_count": 2,
+      "overall_assessment_chars": 203,
+      "run_id": "b3187ab4-9753-4f86-a254-2212860dca16",
+      "input_file": "02_healthcare_ai.txt",
+      "input_chars": 409
+    },
+    {
+      "error": null,
+      "round1_s": 11.27,
+      "round2_s": 6.32,
+      "synth_s": 11.79,
+      "total_s": 29.38,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 4,
+      "confidence": {
+        "high": 0,
+        "medium": 1,
+        "low": 3
+      },
+      "severity": {
+        "critical": 1,
+        "high": 3,
+        "medium": 0,
+        "low": 0
+      },
+      "owasp_tagged": 1,
+      "evidence_total": 10,
+      "vulnerabilities_count": 4,
+      "resilience_count": 2,
+      "overall_assessment_chars": 243,
+      "run_id": "ce4b7c0a-39e4-4e1b-8b20-2aa5ef9867f5",
+      "input_file": "03_fintech_defi.txt",
+      "input_chars": 422
+    },
+    {
+      "error": null,
+      "round1_s": 10.62,
+      "round2_s": 5.54,
+      "synth_s": 14.75,
+      "total_s": 30.91,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 6,
+      "confidence": {
+        "high": 0,
+        "medium": 1,
+        "low": 5
+      },
+      "severity": {
+        "critical": 2,
+        "high": 2,
+        "medium": 2,
+        "low": 0
+      },
+      "owasp_tagged": 2,
+      "evidence_total": 13,
+      "vulnerabilities_count": 2,
+      "resilience_count": 1,
+      "overall_assessment_chars": 305,
+      "run_id": "727f7a94-fb91-44ab-8bf4-afdd4fc4baa7",
+      "input_file": "04_code_review.txt",
+      "input_chars": 664
+    },
+    {
+      "error": null,
+      "round1_s": 3.86,
+      "round2_s": 5.53,
+      "synth_s": 8.4,
+      "total_s": 17.79,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 4,
+      "confidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 4
+      },
+      "severity": {
+        "critical": 0,
+        "high": 2,
+        "medium": 2,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 6,
+      "vulnerabilities_count": 2,
+      "resilience_count": 2,
+      "overall_assessment_chars": 160,
+      "run_id": "7635b4f0-0f5c-4722-a97c-68d93f485288",
+      "input_file": "05_adversarial_injection.txt",
+      "input_chars": 292
+    },
+    {
+      "error": null,
+      "round1_s": 10.07,
+      "round2_s": 6.72,
+      "synth_s": 14.18,
+      "total_s": 30.98,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 5,
+      "confidence": {
+        "high": 0,
+        "medium": 1,
+        "low": 4
+      },
+      "severity": {
+        "critical": 0,
+        "high": 5,
+        "medium": 0,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 11,
+      "vulnerabilities_count": 3,
+      "resilience_count": 2,
+      "overall_assessment_chars": 228,
+      "run_id": "e43b77b3-1acc-412e-976b-3ad5cbe6a197",
+      "input_file": "06_romanian_proposal.txt",
+      "input_chars": 478
+    }
+  ]
+}

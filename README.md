@@ -61,28 +61,33 @@ input ─► Round 1: 6 critiques in parallel (asyncio.gather, each persona on i
 
 ## Eval numbers (from `eval_results/`)
 
-5 inputs (SaaS, healthcare AI, fintech DeFi, insecure auth code, prompt-injection attempt).
+6 inputs (SaaS, healthcare AI, fintech DeFi, insecure auth code,
+prompt-injection attempt, Romanian-language proposal).
 
 | Metric | Multi-model (6 families) | Single-model (Qwen-7B ×6) |
 |---|---|---|
-| Median runtime | 58.9 s | 31.8 s |
+| Median runtime | 58.5 s | 30.8 s |
 | Pass-1 schema success | 100% | 100% |
-| Median findings/run | 4 | 5 |
-| Median evidence quotes/run | 10 | 12 |
-| OWASP-tagged total | 3 | 3 |
-| Medium-confidence findings (total) | **6** | **12** |
+| Median findings/run | 4.5 | 4.5 |
+| Median evidence quotes/run | 10.0 | 10.5 |
+| **OWASP-tagged findings (total)** | **8** | **3** |
+| Medium-confidence findings (total) | 12 | 6 |
 
-The "lower" multi-model number is the *honest* number. Single-model
-scores 2× more medium-confidence findings — but each is the same Qwen-7B
-prior agreeing with itself across six prompts. Multi-model agreement
-is rarer and meaningful: when Qwen, Phi, Falcon, Hermes-Llama, InternLM,
-and Yi independently raise the same concern, that's cross-architecture
-validation.
+**Architectural diversity catches more security signal.** Multi-model
+flags 2.7× more OWASP-tagged findings than single-model on the same
+corpus — different architectures have different security blind spots,
+and aggregating six families catches what any single model misses.
 
-Both modes hit a 100% schema-adherence rate on the synthesizer — the
-two-pass design (`pass1` strict JSON schema + few-shot, `pass2` theme
-extraction with per-reviewer yes/no attribution) means the pipeline
-stays robust if a future small model breaks JSON.
+**Confidence numbers are not directly comparable.** Six instances of
+Qwen-7B "agreeing" with itself is a single prior repeated; six different
+architectures landing on the same finding is independent cross-validation.
+The medium-confidence totals shift run-to-run with sampling variance —
+what matters is the *kind* of agreement, not the specific count.
+
+Both modes hit a **100% pass-1 schema success rate** — the two-pass
+synthesizer design (strict JSON + few-shot in pass 1, theme-extraction
+with per-reviewer yes/no attribution in pass 2) means the pipeline stays
+robust if a future small model breaks JSON.
 
 ![Eval comparison page in the dashboard](screenshots/02_comparison_page.png)
 

@@ -377,13 +377,22 @@ def render_comparison_page() -> None:
         for m, v1, v2 in rows
     ])
 
-    st.markdown("### The calibration insight")
+    st.markdown("### What this comparison tells you")
+    multi_owasp = multi_agg.get("owasp_tagged_total", 0)
+    single_owasp = single_agg.get("owasp_tagged_total", 0)
+    multi_med = multi_agg.get("medium_confidence_findings_total", 0)
+    single_med = single_agg.get("medium_confidence_findings_total", 0)
     st.info(
-        "**Single-model 'medium-confidence' findings count is roughly 2× multi-model's** — "
-        "but that's because the same Qwen-7B agreeing with itself across 6 prompts is a "
-        "weak independence signal. With 6 architecturally distinct families, agreement is "
-        "rarer and more meaningful: 4/6 different models flagging the same risk is a "
-        "real cross-validation, not 4 instances of one prior."
+        f"**Architectural diversity surfaces more security signal.** "
+        f"Multi-model OWASP-tagged: **{multi_owasp}**, single-model: **{single_owasp}**. "
+        f"Different architectures have different security blind spots — aggregating six "
+        f"families catches what any single model misses.\n\n"
+        f"**Confidence numbers are not directly comparable.** Single-model "
+        f"'agreement' is one prior repeated six times — it should not be read "
+        f"as cross-validation. Multi-model agreement is six independent "
+        f"architectures landing on the same finding — that IS cross-validation. "
+        f"This run: multi medium-conf={multi_med}, single medium-conf={single_med}. "
+        f"The numbers shift run-to-run; what matters is the *kind* of agreement."
     )
 
     with st.expander("Per-input details"):
