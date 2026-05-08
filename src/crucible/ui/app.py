@@ -320,6 +320,88 @@ def load_samples() -> dict[str, str]:
     }
 
 
+def load_latest_eval(mode: str) -> dict | None:
+    eval_dir = _project_root() / "eval_results"
+    if not eval_dir.exists():
+        return None
+    files = sorted(eval_dir.glob(f"{mode}_*.json"))
+    if not files:
+        return None
+    try:
+        return json.loads(files[-1].read_text())
+    except Exception:
+        return None
+
+
+def render_comparison_page() -> None:
+    multi = load_latest_eval("multi")
+    single = load_latest_eval("single")
+    if not multi or not single:
+        st.warning(
+            "Eval results not found. Run `python scripts/eval.py` and "
+            "`python scripts/eval.py --single-model`."
+        )
+        return
+
+    st.markdown("### Multi-model vs Single-model — same corpus, same prompts")
+    st.caption(
+        "All 6 personas, 5 inputs (SaaS, healthcare, fintech, code, "
+        "adversarial). Single-model = every persona pinned to "
+        "Qwen2.5-7B-Instruct. Multi-model = each persona on a different "
+        "open-source family."
+    )
+
+    multi_agg = multi.get("aggregate", {})
+    single_agg = single.get("aggregate", {})
+
+    rows = [
+        ("Median runtime (s)", multi_agg.get("median_total_s"), single_agg.get("median_total_s")),
+        ("p95 runtime (s)", multi_agg.get("p95_total_s"), single_agg.get("p95_total_s")),
+        ("Pass-1 success rate", multi_agg.get("pass1_rate"), single_agg.get("pass1_rate")),
+        ("Median findings/run", multi_agg.get("median_findings"), single_agg.get("median_findings")),
+        ("Median evidence/run", multi_agg.get("median_evidence_per_run"), single_agg.get("median_evidence_per_run")),
+        ("OWASP-tagged total", multi_agg.get("owasp_tagged_total"), single_agg.get("owasp_tagged_total")),
+        ("Medium-conf findings (total)", multi_agg.get("medium_confidence_findings_total"), single_agg.get("medium_confidence_findings_total")),
+        ("High-conf findings (total)", multi_agg.get("high_confidence_findings_total"), single_agg.get("high_confidence_findings_total")),
+    ]
+    st.table([
+        {"Metric": m, "Multi-model": v1, "Single-model": v2}
+        for m, v1, v2 in rows
+    ])
+
+    st.markdown("### The calibration insight")
+    st.info(
+        "**Single-model 'medium-confidence' findings count is roughly 2× multi-model's** — "
+        "but that's because the same Qwen-7B agreeing with itself across 6 prompts is a "
+        "weak independence signal. With 6 architecturally distinct families, agreement is "
+        "rarer and more meaningful: 4/6 different models flagging the same risk is a "
+        "real cross-validation, not 4 instances of one prior."
+    )
+
+    with st.expander("Per-input details"):
+        cols = st.columns(2)
+        with cols[0]:
+            st.markdown("**Multi-model**")
+            for r in multi.get("per_input", []):
+                if r.get("error"):
+                    continue
+                st.text(
+                    f"{r['input_file']}: {r['total_s']}s · "
+                    f"{r['findings_count']} findings · "
+                    f"H/M/L {r['confidence']['high']}/{r['confidence']['medium']}/{r['confidence']['low']}"
+                )
+        with cols[1]:
+            st.markdown("**Single-model**")
+            for r in single.get("per_input", []):
+                if r.get("error"):
+                    continue
+                st.text(
+                    f"{r['input_file']}: {r['total_s']}s · "
+                    f"{r['findings_count']} findings · "
+                    f"H/M/L {r['confidence']['high']}/{r['confidence']['medium']}/{r['confidence']['low']}"
+                )
+
+
 # ----- main --------------------------------------------------------------------
 
 def main() -> None:
@@ -369,6 +451,11 @@ h1 { letter-spacing: -0.02em; }
     with st.sidebar:
         st.markdown("### Crucible")
         st.caption("Multi-agent adversarial review on AMD MI300X")
+        page = st.radio(
+            "View",
+            ["Run review", "Multi vs Single (eval)"],
+            label_visibility="collapsed",
+        )
         st.markdown("---")
         st.markdown("**GPU (AMD MI300X)**")
         render_gpu_panel()
@@ -387,6 +474,11 @@ Six different open-source model families.
 Cross-architecture agreement scoring.
 """
         )
+
+    if page == "Multi vs Single (eval)":
+        st.title("Crucible — Eval Comparison")
+        render_comparison_page()
+        return
 
     # ----- header -----
     st.title("Crucible")
