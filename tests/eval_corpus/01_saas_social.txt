@@ -1,0 +1,1 @@
+A SaaS tool that uses AI to automatically generate social media content for small businesses, priced at 29 euros per month. Targets 50,000 European SMBs in year one. Uses GPT-4o under the hood with the customer's brand voice profile. One-click publishing to Instagram, Facebook, LinkedIn, X.

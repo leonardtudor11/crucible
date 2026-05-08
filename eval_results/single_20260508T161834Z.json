@@ -1,0 +1,172 @@
+{
+  "mode": "single",
+  "timestamp": "2026-05-08T16:18:34.849907+00:00",
+  "input_count": 5,
+  "gpu_before": {
+    "used_gb": 198.79,
+    "total_gb": 205.82
+  },
+  "gpu_after": {
+    "used_gb": 198.98,
+    "total_gb": 205.82
+  },
+  "aggregate": {
+    "valid_runs": 5,
+    "errored_runs": 0,
+    "median_total_s": 31.83,
+    "p95_total_s": 37.93499999999999,
+    "median_findings": 5,
+    "median_evidence_per_run": 12,
+    "pass1_rate": 1.0,
+    "owasp_tagged_total": 3,
+    "high_confidence_findings_total": 0,
+    "medium_confidence_findings_total": 12
+  },
+  "per_input": [
+    {
+      "error": null,
+      "round1_s": 11.82,
+      "round2_s": 5.8,
+      "synth_s": 10.99,
+      "total_s": 28.61,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 6,
+      "confidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 6
+      },
+      "severity": {
+        "critical": 0,
+        "high": 6,
+        "medium": 0,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 4,
+      "vulnerabilities_count": 3,
+      "resilience_count": 1,
+      "overall_assessment_chars": 163,
+      "run_id": "43f3fb99-67f3-4e7e-aac4-1cbe6fb02ea7",
+      "input_file": "01_saas_social.txt",
+      "input_chars": 292
+    },
+    {
+      "error": null,
+      "round1_s": 12.56,
+      "round2_s": 7.2,
+      "synth_s": 15.9,
+      "total_s": 35.66,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 5,
+      "confidence": {
+        "high": 0,
+        "medium": 3,
+        "low": 2
+      },
+      "severity": {
+        "critical": 0,
+        "high": 5,
+        "medium": 0,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 14,
+      "vulnerabilities_count": 3,
+      "resilience_count": 2,
+      "overall_assessment_chars": 234,
+      "run_id": "91eb529d-3384-4764-bf97-e41d2bb4cdf8",
+      "input_file": "02_healthcare_ai.txt",
+      "input_chars": 409
+    },
+    {
+      "error": null,
+      "round1_s": 13.96,
+      "round2_s": 6.13,
+      "synth_s": 11.74,
+      "total_s": 31.83,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 4,
+      "confidence": {
+        "high": 0,
+        "medium": 3,
+        "low": 1
+      },
+      "severity": {
+        "critical": 1,
+        "high": 2,
+        "medium": 1,
+        "low": 0
+      },
+      "owasp_tagged": 1,
+      "evidence_total": 12,
+      "vulnerabilities_count": 2,
+      "resilience_count": 2,
+      "overall_assessment_chars": 251,
+      "run_id": "adbe7add-1324-4af4-8433-676e5127f97a",
+      "input_file": "03_fintech_defi.txt",
+      "input_chars": 422
+    },
+    {
+      "error": null,
+      "round1_s": 9.01,
+      "round2_s": 6.33,
+      "synth_s": 17.06,
+      "total_s": 32.41,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 8,
+      "confidence": {
+        "high": 0,
+        "medium": 6,
+        "low": 2
+      },
+      "severity": {
+        "critical": 1,
+        "high": 3,
+        "medium": 4,
+        "low": 0
+      },
+      "owasp_tagged": 2,
+      "evidence_total": 15,
+      "vulnerabilities_count": 4,
+      "resilience_count": 2,
+      "overall_assessment_chars": 210,
+      "run_id": "09cc3f23-f1be-4dff-9b85-40abf2b57cbe",
+      "input_file": "04_code_review.txt",
+      "input_chars": 664
+    },
+    {
+      "error": null,
+      "round1_s": 3.86,
+      "round2_s": 6.31,
+      "synth_s": 9.42,
+      "total_s": 19.59,
+      "synthesis_pass": "pass1",
+      "distinct_models": 1,
+      "findings_count": 5,
+      "confidence": {
+        "high": 0,
+        "medium": 0,
+        "low": 5
+      },
+      "severity": {
+        "critical": 0,
+        "high": 2,
+        "medium": 3,
+        "low": 0
+      },
+      "owasp_tagged": 0,
+      "evidence_total": 6,
+      "vulnerabilities_count": 2,
+      "resilience_count": 2,
+      "overall_assessment_chars": 196,
+      "run_id": "9a42dc21-4aa0-40bd-b57d-511e745faf28",
+      "input_file": "05_adversarial_injection.txt",
+      "input_chars": 292
+    }
+  ]
+}
