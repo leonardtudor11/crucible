@@ -143,22 +143,30 @@ def gpu_snapshot() -> dict | None:
 
 # ----- pipeline orchestration --------------------------------------------------
 
-async def run_pipeline(user_input: str, input_type: str, status_holder):
+SINGLE_MODEL_BASELINE = "Qwen/Qwen2.5-7B-Instruct"
+
+
+async def run_pipeline(
+    user_input: str, input_type: str, status_holder,
+    single_model: bool = False,
+):
     settings = load_settings()
     personas = load_personas(Path(settings.personas_dir))
-    default_model = settings.defaults.get("model", "Qwen/Qwen2.5-7B-Instruct")
+    if single_model:
+        for p in personas:
+            p.model = SINGLE_MODEL_BASELINE
+    default_model = settings.defaults.get("model", SINGLE_MODEL_BASELINE)
 
-    status_holder.update(
-        label=f"Loaded {len(personas)} personas across "
-              f"{len({p.model or default_model for p in personas})} different models"
-    )
+    distinct = len({p.model or default_model for p in personas})
+    mode_label = "single-model baseline" if single_model else f"{distinct}-model panel"
+    status_holder.update(label=f"Loaded {len(personas)} personas — {mode_label}")
 
     async with ChatClient(settings.endpoint) as client:
-        status_holder.update(label="Round 1: 6 critiques in parallel...")
+        status_holder.update(label=f"Round 1 ({mode_label}): 6 critiques in parallel...")
         critiques = await gather_critiques(client, personas, user_input, default_model)
         status_holder.update(label=f"Round 1 complete: {len(critiques)} critiques")
 
-        status_holder.update(label="Round 2: cross-debate (each persona reads the others)...")
+        status_holder.update(label=f"Round 2 ({mode_label}): cross-debate...")
         debate = await run_debate(client, personas, user_input, critiques, default_model)
         status_holder.update(label=f"Round 2 complete: {len(debate)} responses")
 
@@ -169,7 +177,7 @@ async def run_pipeline(user_input: str, input_type: str, status_holder):
             temperature=settings.orchestration.synthesizer_temperature,
             input_type=input_type,
         )
-        status_holder.update(label="Synthesis complete", state="complete")
+        status_holder.update(label=f"Synthesis complete ({mode_label})", state="complete")
     return report
 
 
@@ -527,32 +535,109 @@ Cross-architecture agreement scoring.
         f'<strong>6</strong> reviewers · 6 model families</span>'
         f'</div>'
     )
-    cols = st.columns([3, 2])
+    st.markdown(chips_html, unsafe_allow_html=True)
+    cols = st.columns([2, 2, 1])
     with cols[0]:
-        st.markdown(chips_html, unsafe_allow_html=True)
-    with cols[1]:
         run = st.button(
-            "Run Adversarial Review",
+            "Run multi-model review (6 architectures)",
             type="primary",
             disabled=not user_input.strip(),
             use_container_width=True,
         )
+    with cols[1]:
+        run_both = st.button(
+            "Run BOTH (multi + single baseline) — A/B",
+            disabled=not user_input.strip(),
+            use_container_width=True,
+        )
+    with cols[2]:
+        run_single = st.button(
+            "Single-model only",
+            disabled=not user_input.strip(),
+            use_container_width=True,
+        )
 
-    if run:
-        prepared = prepare_input(user_input, detected)
+    def _run(single: bool, label: str):
         try:
             t0 = time.perf_counter()
-            with st.status("Starting pipeline...", expanded=True) as status_holder:
-                report = asyncio.run(
-                    run_pipeline(prepared, detected, status_holder)
+            with st.status(f"{label}: starting...", expanded=True) as status_holder:
+                rpt = asyncio.run(
+                    run_pipeline(prepared, detected, status_holder, single_model=single)
                 )
-            runtime_s = time.perf_counter() - t0
-            st.session_state["last_report"] = report
-            st.session_state["last_runtime_s"] = runtime_s
+            return rpt, time.perf_counter() - t0
         except InputTooLongError as e:
             st.error(f"Input too long: {e}")
         except Exception as e:
-            st.error(f"Pipeline failed: {type(e).__name__}: {e}")
+            st.error(f"{label} failed: {type(e).__name__}: {e}")
+        return None, 0.0
+
+    if run or run_single or run_both:
+        prepared = prepare_input(user_input, detected)
+        # Clear previous a/b state
+        st.session_state.pop("ab_multi", None)
+        st.session_state.pop("ab_single", None)
+
+        if run:
+            report, runtime_s = _run(single=False, label="Multi-model review")
+            if report:
+                st.session_state["last_report"] = report
+                st.session_state["last_runtime_s"] = runtime_s
+        elif run_single:
+            report, runtime_s = _run(single=True, label="Single-model baseline")
+            if report:
+                st.session_state["last_report"] = report
+                st.session_state["last_runtime_s"] = runtime_s
+        elif run_both:
+            multi_report, multi_t = _run(single=False, label="Multi-model review")
+            single_report, single_t = _run(single=True, label="Single-model baseline")
+            if multi_report and single_report:
+                st.session_state["ab_multi"] = (multi_report, multi_t)
+                st.session_state["ab_single"] = (single_report, single_t)
+                # Clear single-report view to favour A/B view
+                st.session_state.pop("last_report", None)
+
+    # ----- A/B side-by-side render (when both modes were run) -----
+    ab_multi = st.session_state.get("ab_multi")
+    ab_single = st.session_state.get("ab_single")
+    if ab_multi and ab_single:
+        m_rpt, m_t = ab_multi
+        s_rpt, s_t = ab_single
+        st.markdown("---")
+        st.markdown("## A/B comparison — multi-model vs single-model on this input")
+        cols = st.columns(2)
+        with cols[0]:
+            st.markdown(f"### Multi-model panel ({m_rpt.metadata.get('distinct_model_count', 0)} families)")
+            cc = st.columns(4)
+            cc[0].metric("Runtime", f"{m_t:.1f}s")
+            cc[1].metric("Findings", len(m_rpt.findings))
+            cc[2].metric("Medium-conf", sum(1 for f in m_rpt.findings if f.confidence == "medium"))
+            cc[3].metric("OWASP", sum(1 for f in m_rpt.findings if f.owasp_category))
+            st.info(m_rpt.overall_assessment or "—")
+            for i, f in enumerate(m_rpt.findings, 1):
+                render_finding_card(i, f)
+        with cols[1]:
+            st.markdown("### Single-model baseline (Qwen-7B ×6)")
+            cc = st.columns(4)
+            cc[0].metric("Runtime", f"{s_t:.1f}s")
+            cc[1].metric("Findings", len(s_rpt.findings))
+            cc[2].metric("Medium-conf", sum(1 for f in s_rpt.findings if f.confidence == "medium"))
+            cc[3].metric("OWASP", sum(1 for f in s_rpt.findings if f.owasp_category))
+            st.info(s_rpt.overall_assessment or "—")
+            for i, f in enumerate(s_rpt.findings, 1):
+                render_finding_card(i, f)
+
+        # Calibration callout below
+        m_med = sum(1 for f in m_rpt.findings if f.confidence == "medium")
+        s_med = sum(1 for f in s_rpt.findings if f.confidence == "medium")
+        st.markdown("---")
+        st.warning(
+            f"**Calibration check:** single-model claims {s_med} medium-confidence "
+            f"findings vs multi-model's {m_med}. The single-model count is the same "
+            f"Qwen prior repeated 6 times. Multi-model agreement requires "
+            f"{m_rpt.metadata.get('distinct_model_count', 0)} different architectures "
+            f"to independently flag the same risk — a stronger signal."
+        )
+        return
 
     # Render last report (persists across reruns until a new one is produced)
     last_report = st.session_state.get("last_report")
