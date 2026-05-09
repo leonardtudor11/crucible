@@ -121,11 +121,34 @@ def _ssh_json(cmd: str) -> dict:
         return {}
 
 
+def _local_json(cmd: list[str]) -> dict:
+    """Run a command directly on this host (used when Streamlit runs
+    on the droplet itself, not on a remote laptop)."""
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        if out.returncode != 0 or not out.stdout.strip():
+            return {}
+        return json.loads(out.stdout.strip())
+    except Exception:
+        return {}
+
+
+def _on_amd_host() -> bool:
+    """Detect if we're running on a host with an AMD GPU
+    (so we can call rocm-smi directly instead of SSHing out)."""
+    import os as _os
+    return _os.path.exists("/dev/kfd")
+
+
 @st.cache_data(ttl=10, show_spinner=False)
 def gpu_snapshot() -> dict | None:
     try:
-        mem = _ssh_json("rocm-smi --showmeminfo vram --json 2>/dev/null")
-        use = _ssh_json("rocm-smi --showuse --json 2>/dev/null")
+        if _on_amd_host():
+            mem = _local_json(["rocm-smi", "--showmeminfo", "vram", "--json"])
+            use = _local_json(["rocm-smi", "--showuse", "--json"])
+        else:
+            mem = _ssh_json("rocm-smi --showmeminfo vram --json 2>/dev/null")
+            use = _ssh_json("rocm-smi --showuse --json 2>/dev/null")
         gpu_mem = mem.get("card0") or mem.get("GPU[0]") or next(iter(mem.values()), {})
         gpu_use = use.get("card0") or use.get("GPU[0]") or next(iter(use.values()), {})
         used_b = int(gpu_mem.get("VRAM Total Used Memory (B)", 0))
