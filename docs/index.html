@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crucible — Multi-Model Adversarial AI Review on AMD MI300X</title>
+  <meta name="description" content="Six different open-source LLM families running adversarial review in parallel on a single AMD MI300X. Cross-architecture agreement scores findings; every claim is backed by a verbatim evidence quote.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+
+<!-- Hero -->
+<section class="max-w-6xl mx-auto px-6 pt-20 pb-12">
+  <div class="text-xs uppercase tracking-[0.2em] text-blue-400 font-medium mb-6">
+    AMD Developer Cloud Hackathon · May 2026
+  </div>
+  <h1 class="text-7xl font-bold tracking-tight mb-6 gradient-text inline-block">Crucible</h1>
+  <p class="text-2xl text-slate-300 mb-3 max-w-3xl leading-snug">
+    Multi-agent adversarial AI review. Six different open-source LLM families
+    in parallel on a single AMD MI300X.
+  </p>
+  <p class="text-lg text-slate-400 mb-10 max-w-3xl">
+    Cross-architecture agreement scores findings. Every claim is backed by a
+    verbatim evidence quote from the model that raised it.
+  </p>
+  <div class="flex flex-wrap gap-3">
+    <a href="https://github.com/leonardtudor11/crucible" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-md font-medium transition">
+      View source on GitHub →
+    </a>
+    <a href="#try-it" class="border border-slate-700 hover:bg-slate-900 px-6 py-3 rounded-md font-medium transition">
+      Run it yourself
+    </a>
+    <a href="https://github.com/leonardtudor11/crucible/blob/main/SELF_REVIEW.md" class="border border-slate-700 hover:bg-slate-900 px-6 py-3 rounded-md font-medium transition">
+      Read the recursive self-review
+    </a>
+  </div>
+</section>
+
+<!-- Numbers -->
+<section class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-2">The numbers</h2>
+  <p class="text-slate-400 mb-8">6-input corpus eval — multi-model panel vs single-model baseline</p>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-lg">
+      <div class="text-5xl font-bold text-blue-400">8 vs 3</div>
+      <div class="text-sm text-slate-400 mt-3 leading-tight">OWASP-tagged findings — multi vs single (~2.7×)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-lg">
+      <div class="text-5xl font-bold text-blue-400">100%</div>
+      <div class="text-sm text-slate-400 mt-3 leading-tight">Pass-1 schema adherence on both modes</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-lg">
+      <div class="text-5xl font-bold text-blue-400">192 GB</div>
+      <div class="text-sm text-slate-400 mt-3 leading-tight">VRAM, all six models loaded concurrently at FP16</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-lg">
+      <div class="text-5xl font-bold text-blue-400">0</div>
+      <div class="text-sm text-slate-400 mt-3 leading-tight">Tokens leave the GPU — privacy invariant</div>
+    </div>
+  </div>
+</section>
+
+<!-- The reviewer panel -->
+<section class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-2">The reviewer panel</h2>
+  <p class="text-slate-400 mb-8">Six different model families. No homogeneous priors.</p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Skeptic</div>
+      <div class="font-mono text-sm text-slate-200">Qwen2.5-7B-Instruct</div>
+      <div class="text-xs text-slate-500 mt-1">Alibaba</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Red Teamer</div>
+      <div class="font-mono text-sm text-slate-200">Hermes-3-Llama-3.1-8B</div>
+      <div class="text-xs text-slate-500 mt-1">Nous Research</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Ethics Auditor</div>
+      <div class="font-mono text-sm text-slate-200">Falcon3-7B-Instruct</div>
+      <div class="text-xs text-slate-500 mt-1">TII</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Market Critic</div>
+      <div class="font-mono text-sm text-slate-200">Phi-3.5-mini-instruct</div>
+      <div class="text-xs text-slate-500 mt-1">Microsoft</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Devil's Advocate</div>
+      <div class="font-mono text-sm text-slate-200">Yi-1.5-9B-Chat</div>
+      <div class="text-xs text-slate-500 mt-1">01.AI</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-lg">
+      <div class="text-sm text-blue-400 font-semibold uppercase tracking-wide mb-1">Pragmatist</div>
+      <div class="font-mono text-sm text-slate-200">InternLM2.5-7B-chat</div>
+      <div class="text-xs text-slate-500 mt-1">Shanghai AI Lab</div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-2">Architecture</h2>
+  <p class="text-slate-400 mb-8">LiteLLM proxy + 6 vLLM containers, all on one MI300X. Bound to 127.0.0.1.</p>
+  <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 overflow-x-auto">
+    <pre class="text-sm text-slate-300 leading-relaxed">┌──────────────────┐    ┌──────────────────────┐    ┌──────────────────────────┐
+│   Mac (laptop)   │    │  LiteLLM proxy       │    │  AMD MI300X (192 GB)     │
+│                  │ ───→  127.0.0.1:8000   ───→ │                          │
+│  Streamlit + CLI │    │  routes by model     │    │  vLLM :8001 Qwen-7B      │
+│                  │    │                      │    │  vLLM :8002 Phi-3.5      │
+│  via SSH tunnel  │    │                      │    │  vLLM :8003 Falcon3-7B   │
+└──────────────────┘    └──────────────────────┘    │  vLLM :8004 Hermes-3-8B  │
+                                                     │  vLLM :8005 InternLM-7B  │
+                                                     │  vLLM :8006 Yi-1.5-9B    │
+                                                     └──────────────────────────┘</pre>
+  </div>
+  <p class="text-slate-400 text-sm mt-4">
+    Each vLLM at <code class="text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">--gpu-memory-utilization 0.13</code>.
+    All six fit in 192 GB at FP16 with ~22 GB headroom.
+  </p>
+</section>
+
+<!-- Trust pack -->
+<section class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-8">Trust pack — what makes findings falsifiable</h2>
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">1. Evidence citation</div>
+      <p class="text-slate-300 text-sm">One verbatim quote per attributed reviewer. Auditable claims.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">2. Self-disclosure metadata</div>
+      <p class="text-slate-300 text-sm">run_id · ISO timestamp · per-persona model map · distinct-model count · token usage.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">3. Prompt-injection defense</div>
+      <p class="text-slate-300 text-sm">SECURITY NOTICE prefix + <code class="text-xs bg-slate-800 px-1 py-0.5 rounded">&lt;&lt;USER_INPUT&gt;&gt;</code> markers wrap untrusted text.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">4. Input length cap</div>
+      <p class="text-slate-300 text-sm">20k char hard limit. Token-exhaustion DoS is not a viable attack.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">5. OWASP regex validation</div>
+      <p class="text-slate-300 text-sm">A01–A10 + LLM01–LLM10 only. Placeholder strings rejected.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 p-5 rounded-lg">
+      <div class="text-blue-400 font-semibold mb-2">+ Recursive self-review</div>
+      <p class="text-slate-300 text-sm">
+        <a href="https://github.com/leonardtudor11/crucible/blob/main/SELF_REVIEW.md" class="text-blue-400 underline">SELF_REVIEW.md</a>
+        &mdash; Crucible reviewing its own pitch. Real findings, not cherry-picked.
+        Regenerable via <code class="text-xs bg-slate-800 px-1 py-0.5 rounded">scripts/self_review.py</code>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Screenshots -->
+<section class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-8">Screenshots</h2>
+  <div class="grid md:grid-cols-2 gap-6">
+    <a href="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/05_ab_compare.png" class="block">
+      <img src="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/05_ab_compare.png" class="rounded-lg border border-slate-800 hover:border-blue-500 transition w-full" alt="A/B compare: multi-model vs single-model on the same input"/>
+      <div class="text-sm text-slate-400 mt-2">A/B compare — multi-model vs single-model on the same input</div>
+    </a>
+    <a href="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/03_findings_with_evidence.png" class="block">
+      <img src="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/03_findings_with_evidence.png" class="rounded-lg border border-slate-800 hover:border-blue-500 transition w-full" alt="Findings with verbatim evidence quotes"/>
+      <div class="text-sm text-slate-400 mt-2">Findings with verbatim evidence quotes</div>
+    </a>
+    <a href="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/02_comparison_page.png" class="block">
+      <img src="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/02_comparison_page.png" class="rounded-lg border border-slate-800 hover:border-blue-500 transition w-full" alt="Eval comparison page"/>
+      <div class="text-sm text-slate-400 mt-2">Eval comparison page — across the full corpus</div>
+    </a>
+    <a href="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/06_metrics_tokens.png" class="block">
+      <img src="https://raw.githubusercontent.com/leonardtudor11/crucible/main/screenshots/06_metrics_tokens.png" class="rounded-lg border border-slate-800 hover:border-blue-500 transition w-full" alt="Metrics tab with token + privacy accounting"/>
+      <div class="text-sm text-slate-400 mt-2">Metrics tab — External API tokens: 0 (the privacy invariant rendered)</div>
+    </a>
+  </div>
+</section>
+
+<!-- Try it -->
+<section id="try-it" class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <h2 class="text-3xl font-bold mb-2">Run it yourself</h2>
+  <p class="text-slate-400 mb-8">
+    You'll need an AMD MI300X (or any OpenAI-compatible <code class="text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">/v1/chat/completions</code> endpoint), Python 3.11+, and Docker.
+  </p>
+  <div class="bg-black border border-slate-800 rounded-lg p-5 overflow-x-auto">
+    <pre class="text-sm text-slate-300 leading-relaxed"><span class="text-slate-500"># 1. Clone the repo</span>
+git clone https://github.com/leonardtudor11/crucible
+cd crucible
+
+<span class="text-slate-500"># 2. Spin up the panel on the droplet (idempotent)</span>
+bash ops/launch_panel.sh &lt;mi300x-ip&gt;
+
+<span class="text-slate-500"># 3. Tunnel + install</span>
+ssh -L 8000:localhost:8000 -N root@&lt;mi300x-ip&gt; &amp;
+python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e .
+cp .env.example .env  <span class="text-slate-500"># set CRUCIBLE_API_KEY=sk-crucible-local</span>
+
+<span class="text-slate-500"># 4. CLI</span>
+python scripts/run_demo.py "Your proposal text here"
+
+<span class="text-slate-500"># 5. Dashboard</span>
+streamlit run src/crucible/ui/app.py
+
+<span class="text-slate-500"># 6. Eval — multi vs single comparison</span>
+python scripts/eval.py
+python scripts/eval.py --single-model
+
+<span class="text-slate-500"># 7. The recursive proof — regenerates SELF_REVIEW.md</span>
+python scripts/self_review.py</pre>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="max-w-6xl mx-auto px-6 py-12 border-t border-slate-800">
+  <div class="flex flex-wrap gap-6 text-sm text-slate-400">
+    <div>Built by Mirel Leonard Tudor for the AMD Developer Cloud Hackathon, May 2026</div>
+    <div>·</div>
+    <div>MIT licensed</div>
+    <div>·</div>
+    <a href="https://github.com/leonardtudor11/crucible" class="text-blue-400 hover:text-blue-300 underline">github.com/leonardtudor11/crucible</a>
+  </div>
+  <div class="text-xs text-slate-500 mt-4">
+    Tag: v1.0-hackathon. Reproducibility: every finding has a run_id and ISO timestamp.
+  </div>
+</footer>
+
+</body>
+</html>
